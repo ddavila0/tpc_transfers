@@ -23,8 +23,11 @@ class TPC_util:
         
 	return macaroon
     
-    def get_base_command(self):
-        command=["curl", "-L", "--capath", "/etc/grid-security/certificates"]
+    def get_base_command(self, verbose=False):
+	if verbose:
+        	command=["curl", "-v", "-L", "--capath", "/etc/grid-security/certificates"]
+	else:
+        	command=["curl", "-L", "--capath", "/etc/grid-security/certificates"]
         if(self.curl_debug == 0):
             command = command + ["-s"]
         command = command + [self.timeout]
@@ -117,7 +120,7 @@ class TPC_util:
         # If new_file is not set the content of the file is displayed instead
         if(new_filename is not None):
             command = command + ["-o", new_filename]
-
+	self.log.debug(self.get_command_str(command))
         out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = out.communicate()
         if out.returncode == 0:
@@ -167,15 +170,16 @@ class TPC_util:
         if return_code:
             raise subprocess.CalledProcessError(return_code, cmd)
 
-    def tpc(self, url_src, macaroon_src, url_dst, macaroon_dst):
+    def tpc(self, url_src, macaroon_src, url_dst, macaroon_dst, verbose=False):
         ret = -1
-        command = self.get_base_command()
+        command = self.get_base_command(verbose=verbose)
         command = command + ["-X", "COPY"]
         command = command + ["-H", 'TransferHeaderAuthorization: Bearer '+macaroon_src]
         command = command + ["-H", 'Source: '+url_src]
         command = command + ["-H", 'Authorization: Bearer '+macaroon_dst]
         command = command + [url_dst]
-        out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.log.debug(self.get_command_str(command))
+	out = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = out.communicate()
         self.log.debug("stdout:\n "+stdout)
         if out.returncode == 0:

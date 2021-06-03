@@ -10,6 +10,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", "-v", help="Verbose", action="store_true")
     parser.add_argument("--use_x509", help="Use only x509 and not macaroons", action="store_true")
+    parser.add_argument("--token", help="Use provided token")
     parser.add_argument("filepath", help="file to be sent")
     parser.add_argument("dest", help="Destination URL")
     return parser.parse_args()
@@ -23,7 +24,7 @@ def main():
     filepath        = args.filepath
 
     if not "https" in url:
-        log.error("URL has to start with https")
+        print("Error:URL has to start with https")
         sys.exit(1)
     #---------------------------------------------------------------------------
 
@@ -54,7 +55,10 @@ def main():
     
     macaroon = None
     if not use_x509:
-        macaroon = tpc_util.request_macaroon(url, "UPLOAD,LIST")
+	if args.token:
+		macaroon = args.token
+	else:
+        	macaroon = tpc_util.request_macaroon(url, "UPLOAD,LIST")
     tpc_util.put_file(url, macaroon, filepath)
 
 log = logging.getLogger()    

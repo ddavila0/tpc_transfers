@@ -48,7 +48,8 @@ def main():
     
   
     tpc_util = TPC_util(log, timeout, curl_debug, proxy)
-    macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST")
+    #macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST")
+    macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST,READ_METADATA")
     if macaroon:
         log.info("Macaroon:\n"+macaroon)
         try:
