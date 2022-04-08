@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script is used to cook curl commands that will perform actions similar to those in a Third Part Copy transfer
 # done through FTS: request macaroon, download file, upload file, copy, get checksum, etc.
@@ -21,7 +21,7 @@ import time
 import subprocess
 import pdb
 import os
-import ConfigParser
+import configparser
 import datetime
 from multiprocessing import Process, Value, Lock
 from tpc_utils import *
@@ -30,6 +30,7 @@ from tpc_utils import *
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", "-v", help="Verbose", action="store_true")
+    parser.add_argument("--use_x509", help="Use only x509 and not macaroons", action="store_true")
     parser.add_argument("source", help="Source URL")
     parser.add_argument("destination", help="Destination URL")
     return parser.parse_args()
@@ -38,6 +39,7 @@ def parse_args():
 def main():
     #---- Read arguments-------------------------------------------------------- 
     args = parse_args()
+    use_x509= args.use_x509
     url_src = args.source
     url_dst = args.destination
     if not "https" in url_src or not "https" in url_dst:
@@ -54,7 +56,7 @@ def main():
     
     # Check that the configuration file exists
     if os.path.isfile(".config"):
-        configParser = ConfigParser.RawConfigParser()
+        configParser = configparser.RawConfigParser()
         configParser.read(".config")
         
         curl_debug = configParser.getint('all', 'curl_debug')
@@ -71,16 +73,18 @@ def main():
     tpc_util = TPC_util(log, timeout, curl_debug, proxy)
     
     log.info("Making TPC: "+url_src+" -> "+url_dst)
+    macaroon_src = macaroon_dst = None
+    if not use_x509:
     # Get macaroons
-    log.info("Requesting macaroons")
-    macaroon_src = tpc_util.request_macaroon(url_src, "DOWNLOAD,DELETE,LIST")
-    macaroon_dst = tpc_util.request_macaroon(url_dst, "UPLOAD,DELETE,LIST")
-    if(not macaroon_src):
-        log.info("Could not get src macaroon")
-        exit(1)
-    if(not macaroon_dst):
-        log.info("Could not get dst macaroon")
-        exit(1)
+        log.info("Requesting macaroons")
+        macaroon_src = tpc_util.request_macaroon(url_src, "DOWNLOAD,DELETE,LIST")
+        macaroon_dst = tpc_util.request_macaroon(url_dst, "UPLOAD,DELETE,LIST")
+        if(not macaroon_src):
+            log.info("Could not get src macaroon")
+            exit(1)
+        if(not macaroon_dst):
+            log.info("Could not get dst macaroon")
+            exit(1)
     # Start TPC
     log.info("Starting transfer")
     res = tpc_util.tpc(url_src, macaroon_src, url_dst, macaroon_dst, verbose=True)

@@ -5,6 +5,7 @@ import logging
 import ConfigParser
 import argparse
 from tpc_utils import *
+import pdb
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -23,7 +24,7 @@ def main():
     new_filename    = args.dest
 
     if not "https" in url:
-        log.error("URL has to start with https")
+        print("URL has to start with https")
         sys.exit(1)
     #---------------------------------------------------------------------------
 

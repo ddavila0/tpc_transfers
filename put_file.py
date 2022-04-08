@@ -59,7 +59,7 @@ def main():
 		macaroon = args.token
 	else:
         	macaroon = tpc_util.request_macaroon(url, "UPLOAD,LIST")
-    tpc_util.put_file(url, macaroon, filepath)
+    tpc_util.put_file(url, macaroon, filepath, verbose=args.verbose)
 
 log = logging.getLogger()    
 if __name__ == "__main__":

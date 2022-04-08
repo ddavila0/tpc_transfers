@@ -1,15 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import os
 import logging
-import ConfigParser
+import configparser
 import argparse
-#from pymacaroons import Macaroon, Verifier
+from pymacaroons import Macaroon, Verifier
 from tpc_utils import *
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", "-v", help="Verbose", action="store_true")
+    parser.add_argument("--ipv4", "-4", help="ipv4", action="store_true")
+    parser.add_argument("--ipv6", "-6", help="ipv6", action="store_true")
     parser.add_argument("source", help="Source URL")
     return parser.parse_args()
 
@@ -32,7 +34,7 @@ def main():
     
     # Check that the configuration file exists
     if os.path.isfile(".config"):
-        configParser = ConfigParser.RawConfigParser()
+        configParser = configparser.RawConfigParser()
         configParser.read(".config")
         
         curl_debug = configParser.getint('all', 'curl_debug')
@@ -48,15 +50,21 @@ def main():
     
   
     tpc_util = TPC_util(log, timeout, curl_debug, proxy)
-    #macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST")
-    macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST,READ_METADATA")
+    caveats="UPLOAD,DOWNLOAD,LIST,READ_METADATA"
+    #caveats="DOWNLOAD,LIST"
+    if args.ipv4:
+        macaroon = tpc_util.request_macaroon(url, caveats, "-4")
+    elif args.ipv6:
+        macaroon = tpc_util.request_macaroon(url, caveats, "-6")
+    else:
+        macaroon = tpc_util.request_macaroon(url, caveats)
     if macaroon:
         log.info("Macaroon:\n"+macaroon)
         try:
             n = Macaroon.deserialize(macaroon)
-            log.debug("Macaroon deserialized:\n"+n.inspect())
+            log.info("Macaroon deserialized:\n"+n.inspect())
         except:
-            log.debug("Cannot deserialize the macaroon")
+            log.info("Cannot deserialize the macaroon")
     else:
         log.error("Cannot get the macaroon")
 

@@ -9,6 +9,7 @@ from tpc_utils import *
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", "-v", help="Verbose", action="store_true")
+    parser.add_argument("--use_x509", help="Use only x509 and not macaroons", action="store_true")
     parser.add_argument("source", help="Source URL")
     parser.add_argument("byte_start", help="First byte to download")
     parser.add_argument("byte_end", help="Last byte to download")
@@ -18,6 +19,7 @@ def parse_args():
 def main():
     #---- Read arguments-------------------------------------------------------- 
     args = parse_args()
+    use_x509    = args.use_x509
     url         = args.source
     byte_start  = args.byte_start
     byte_end    = args.byte_end
@@ -51,7 +53,10 @@ def main():
     #---------------------------------------------------------------------------
    
     tpc_util = TPC_util(log, timeout, curl_debug, proxy)
-    macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST")
+    macaroon = None
+    if not use_x509:
+        macaroon = tpc_util.request_macaroon(url, "DOWNLOAD,LIST")
+
     file_content = tpc_util.get_byte_range(url, macaroon, byte_start, byte_end)
     log.info("File content:\n"+file_content)
 

@@ -5,11 +5,12 @@ import logging
 import ConfigParser
 import argparse
 from tpc_utils import *
+import pdb
+import xml.dom.minidom
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--verbose", "-v", help="Verbose", action="store_true")
-    parser.add_argument("--use_x509", help="Use only x509 and not macaroons", action="store_true")
     parser.add_argument("source", help="Source URL")
     return parser.parse_args()
 
@@ -17,9 +18,10 @@ def parse_args():
 def main():
     #---- Read arguments-------------------------------------------------------- 
     args = parse_args()
-    url = args.source
+    url             = args.source
+
     if not "https" in url:
-        print("ERROR: URL has to start with https")
+        print("URL has to start with https")
         sys.exit(1)
     #---------------------------------------------------------------------------
 
@@ -45,20 +47,11 @@ def main():
         timeout = 120
 
     #---------------------------------------------------------------------------
+   
     tpc_util = TPC_util(log, timeout, curl_debug, proxy)
-    macaroon = None
-    if not args.use_x509:
-        macaroon = tpc_util.request_macaroon(url, "READ_METADATA,DOWNLOAD,LIST")
-    else:
-        log.info("using x509 for auth")
-    
-    adler32 = tpc_util.get_adler32(url, macaroon, args.verbose)
-
-    if adler32:
-       log.info(adler32)
-    else:
-       log.error("no checksum returned")
-
+    xml_string = tpc_util.get_propfind(url)
+    dom = xml.dom.minidom.parseString(xml_string)
+    print(dom.toprettyxml())
 
 log = logging.getLogger()    
 if __name__ == "__main__":
